@@ -2,10 +2,7 @@
 
 package com.zachklipp.compose.backstack
 
-import androidx.ui.core.LayoutDirection
-import androidx.ui.core.LayoutModifier
-import androidx.ui.core.Modifier
-import androidx.ui.core.drawOpacity
+import androidx.ui.core.*
 import androidx.ui.unit.Density
 import androidx.ui.unit.IntPxPosition
 import androidx.ui.unit.IntPxSize
@@ -49,17 +46,23 @@ interface BackstackTransition {
         )
 
         private class PercentageLayoutOffset(private val offset: Float) : LayoutModifier {
-            override fun Density.modifyPosition(
-                childSize: IntPxSize,
-                containerSize: IntPxSize,
+            override fun MeasureScope.measure(
+                measurable: Measurable,
+                constraints: Constraints,
                 layoutDirection: LayoutDirection
-            ): IntPxPosition {
+            ): MeasureScope.MeasureResult {
                 var realOffset = offset.coerceIn(-1f..1f)
                 if (layoutDirection == LayoutDirection.Rtl) realOffset *= -1f
-                return IntPxPosition(
-                    x = containerSize.width * realOffset,
-                    y = 0.ipx
-                )
+
+                val placeable = measurable.measure(constraints)
+                return layout(placeable.width, placeable.height) {
+                    val x = placeable.width * realOffset
+                    val y = 0.ipx
+                    placeable.placeAbsolute(
+                        (if (layoutDirection == LayoutDirection.Ltr) x else -x),
+                        y
+                    )
+                }
             }
         }
     }
